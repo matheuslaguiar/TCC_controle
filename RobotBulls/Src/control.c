@@ -8,27 +8,21 @@
 #include "control.h"
 #include "gpio.h"
 
-int32_t pulso_dir_A = 0;
-int32_t pulso_esq_A = 0;
+int32_t pulso_dir = 0;
+int32_t pulso_esq = 0;
 uint32_t outros = 0;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	switch (GPIO_Pin) {
-	case ENC_DIR_A_Pin:
+	case ENC_DIR_Pin:
 	{
-		if(HAL_GPIO_ReadPin(ENC_DIR_B_GPIO_Port, ENC_DIR_B_Pin))
-			pulso_dir_A++;
-		else
-			pulso_dir_A--;
+		pulso_dir++;
 		break;
 	}
-	case ENC_ESQ_A_Pin:
+	case ENC_ESQ_Pin:
 	{
-		if(HAL_GPIO_ReadPin(ENC_ESQ_B_GPIO_Port, ENC_ESQ_B_Pin))
-			pulso_esq_A++;
-		else
-			pulso_esq_A--;
+		pulso_esq++;
 		break;
 	}
 	default:
@@ -36,13 +30,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 }
 
-int32_t control_getPulsoDirA()
+int32_t control_getPulsoDir()
 {
-	return pulso_dir_A;
+	return pulso_dir;
 }
 
-int32_t control_getPulsoEsqA()
+int32_t control_getPulsoEsq()
 {
-	return pulso_esq_A;
+	return pulso_esq;
 }
 
