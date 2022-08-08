@@ -50,3 +50,10 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# STM32CubeIDE files
+Debug/
+.orig
+.settings/
+.mxproject
+*.launch
