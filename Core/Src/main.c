@@ -155,12 +155,13 @@ int main(void)
 //		  bluetoothPrint((uint8_t*) "\n\n");
 
 		  // PRINT EVERY 200 ms
-		  if(HAL_GetTick() % 200 < 10 && !lock){
+		  if(HAL_GetTick() % 1000 < 100 && !lock){
 			  lock = 1;
-			  bluetoothPrint((uint8_t*) "\n\n\nEncoder DIR:");
+			  bluetoothPrint((uint8_t*) "\n--------------------------\nEncoder DIR:");
 			  bluetoothPrintVal(control_getPulsoDir());
 			  bluetoothPrint((uint8_t*) "\n\nEncoder ESQ:");
 			  bluetoothPrintVal(control_getPulsoEsq());
+			  bluetoothPrint((uint8_t*)"\n--------------------------\n");
 		  }
 		  else {
 			  lock = 0;
