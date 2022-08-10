@@ -60,16 +60,12 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define microSt_Pin GPIO_PIN_1
 #define microSt_GPIO_Port GPIOA
-#define ENC_ESQ_A_Pin GPIO_PIN_2
-#define ENC_ESQ_A_GPIO_Port GPIOA
-#define ENC_ESQ_A_EXTI_IRQn EXTI2_IRQn
-#define ENC_ESQ_B_Pin GPIO_PIN_3
-#define ENC_ESQ_B_GPIO_Port GPIOA
-#define ENC_DIR_B_Pin GPIO_PIN_5
-#define ENC_DIR_B_GPIO_Port GPIOA
-#define ENC_DIR_A_Pin GPIO_PIN_6
-#define ENC_DIR_A_GPIO_Port GPIOA
-#define ENC_DIR_A_EXTI_IRQn EXTI9_5_IRQn
+#define ENC_ESQ_Pin GPIO_PIN_2
+#define ENC_ESQ_GPIO_Port GPIOA
+#define ENC_ESQ_EXTI_IRQn EXTI2_IRQn
+#define ENC_DIR_Pin GPIO_PIN_6
+#define ENC_DIR_GPIO_Port GPIOA
+#define ENC_DIR_EXTI_IRQn EXTI9_5_IRQn
 #define Botao_Pin GPIO_PIN_7
 #define Botao_GPIO_Port GPIOA
 #define Radio4_Pin GPIO_PIN_15

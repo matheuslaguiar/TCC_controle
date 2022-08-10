@@ -12,7 +12,7 @@
 
 
 // Getters
-int32_t control_getPulsoDirA();
-int32_t control_getPulsoEsqA();
+int32_t control_getPulsoDir();
+int32_t control_getPulsoEsq();
 
 #endif /* INC_CONTROL_H_ */
