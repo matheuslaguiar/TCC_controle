@@ -21,6 +21,7 @@
 #include "main.h"
 #include "adc.h"
 #include "dma.h"
+#include "spi.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -31,6 +32,7 @@
 #include "user_adc.h"
 #include "pcs.h"
 #include "motor.h"
+#include "periph_spi.h"
 
 /* USER CODE END Includes */
 
@@ -106,6 +108,7 @@ int main(void)
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   MX_USART3_UART_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
   user_adc_Init();
@@ -113,9 +116,9 @@ int main(void)
   motorL(0);
   motorR(0);
 
-  // Help variable
+  // Help variableS
   uint8_t lock = 0;
-
+  uint8_t alternador = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -169,6 +172,25 @@ int main(void)
 
 		  break;
 /* END RC STATE ***************************************************************/
+	  case TESTE_SPI:
+
+		  // PRINT EVERY 1000 ms
+		  if(HAL_GetTick() % 1000 == 0 && !lock){
+			  lock = 1;
+			  if(alternador){
+				  if(periph_spi_sendBuf((uint8_t*) "VAI PALMEIRASSSSSSS", 19) != HAL_OK)
+					  bluetoothPrint((uint8_t *)"\nALGO DE ERRADO NAO ESTA CERTO NO SPI\n");
+			  }
+			  else{
+				  if(periph_spi_sendBuf((uint8_t*) "AaAAAaAAAAAaA", 13) != HAL_OK)
+					  bluetoothPrint((uint8_t *)"\nALGO DE ERRADO NAO ESTA CERTO NO SPI\n");
+			  }
+			  alternador = !alternador;
+		  }
+		  else
+			  lock = 0;
+		  break;
+/* END TESTE SPI STATE ***************************************************************/
 	  } // END STATE MACHINE
     /* USER CODE END WHILE */
 

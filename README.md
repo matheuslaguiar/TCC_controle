@@ -25,6 +25,9 @@ A tabela a seguir indica os pinos utilizados do microcontrolador, seguido por su
 | PA10 | USART1 RX                                   | -            |
 | PB10 | USART3 TX                                   | -            |
 | PB11 | USART3 RX                                   | -            |
+| PB3  | SPI Clock                                   | SPI1_SCK     |
+| PB5  | SPI Master Output Slave Input               | SPI1_MOSI    |
+| PB6  | SPI Chip Select                             | SPI1_CS      |
 
 ## Componentes
 ### Bluetooth
@@ -41,6 +44,9 @@ Essa componente é quem efetivamente comunica com a placa Roboclaw Motor Control
 
 ### PCS
 Essa componente adquire os valores de leitura do rádio controle ou sistema de controle proporcional (do inglês "Proportional Control System", PCS). Ela traduz o sinal PWM das entradas do rádio para valores inteiros proporcionais à posição dos joysticks.
+
+### Periph SPI
+Essa componente é responsável pela comunicação do microcontrolador STM32 com o periférico SPI, que é o microcontrolador ESP32. Por meio dela, é possível enviar dados do mestre (STM32) para o escravo (ESP32), utilizando o protocolo de comunicação SPI.
 
 ### User ADC
 Essa componente faz a leitura dos canais analógicos do microcontrolador. O microcontrolador utiliza DMA (acesso direto a memória) para salvar os valores da leitura analógica em um vetor, e esta componente acessa esse vetor e retorna a média das leituras de um canal especificado, além de fazer a inicialização da captura.
