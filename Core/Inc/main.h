@@ -74,6 +74,8 @@ void Error_Handler(void);
 #define Radio5_GPIO_Port GPIOA
 #define Radio3_Pin GPIO_PIN_4
 #define Radio3_GPIO_Port GPIOB
+#define SPI1_CS_Pin GPIO_PIN_6
+#define SPI1_CS_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

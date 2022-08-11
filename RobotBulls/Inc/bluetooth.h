@@ -15,6 +15,7 @@
 typedef enum {
 	CONFIG = -1,
 	JOGADA_RC,
+	TESTE_SPI,
 } jogada3Kg_TypeDef;
 /* Variáveis */
 extern uint8_t lado_dir;
