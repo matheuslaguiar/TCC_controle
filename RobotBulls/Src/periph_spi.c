@@ -32,52 +32,22 @@ uint32_t periph_spi_sendBuf(uint8_t * buffer, uint32_t length)
 		return HAL_BUSY;
 
 	// Length bigger than buffer size
-	if(length > SPI_BUFFER_SIZE - 4)
+	if(length > SPI_BUFFER_SIZE)
 		return HAL_ERROR;
 
 	// Clear SPI buffer
 	memset(spi_buffer, 0x00, SPI_BUFFER_SIZE);
 
+	// Copy buffer to SPI buffer
+	memcpy(spi_buffer, buffer, length);
+
+	// Calculate CRC and put at the end of buffer
+	crc = crc16(spi_buffer, length);
+	spi_buffer[length++] = (uint8_t) (crc >> 8);
+	spi_buffer[length++] = (uint8_t) crc;
+
 	// Data must be sent as a whole word (multiples of 4 bytes)
-	switch(length%4){
-	case 0:
-		// BUFFER + 0XFF + 0XFF + CRC16
-		memcpy(spi_buffer, buffer, length);
-		spi_buffer[length++] = 0xff;
-		spi_buffer[length++] = 0xff;
-		crc = crc16(spi_buffer, length);
-		spi_buffer[length++] = (uint8_t) (crc >> 8);
-		spi_buffer[length++] = (uint8_t) crc;
-		break;
-
-	case 1:
-		// BUFFER + 0XFF + CRC16
-		memcpy(spi_buffer, buffer, length);
-		spi_buffer[length++] = 0xff;
-		crc = crc16(spi_buffer, length);
-		spi_buffer[length++] = (uint8_t) (crc >> 8);
-		spi_buffer[length++] = (uint8_t) crc;
-		break;
-
-	case 2:
-		// BUFFER + CRC16
-		memcpy(spi_buffer, buffer, length);
-		crc = crc16(spi_buffer, length);
-		spi_buffer[length++] = (uint8_t) (crc >> 8);
-		spi_buffer[length++] = (uint8_t) crc;
-		break;
-
-	case 3:
-		// BUFFER + 0XFF + 0XFF + 0XFF + CRC16
-		memcpy(spi_buffer, buffer, length);
-		spi_buffer[length++] = 0xff;
-		spi_buffer[length++] = 0xff;
-		spi_buffer[length++] = 0xff;
-		crc = crc16(spi_buffer, length);
-		spi_buffer[length++] = (uint8_t) (crc >> 8);
-		spi_buffer[length++] = (uint8_t) crc;
-		break;
-	}
+	length += 4 - (length%4);
 
 	startComunication();
 	status = HAL_SPI_Transmit(&hspi1, spi_buffer, length, SPI_TIMEOUT);
