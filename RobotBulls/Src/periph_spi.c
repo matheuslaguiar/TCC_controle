@@ -108,10 +108,24 @@ void periph_spi_sendRightMotorPower(int8_t value){
 	periph_spi_sendBuf(pre_buf, 2);
 }
 
-void periph_spi_sendMotorSpeed() { // TODO
+void periph_spi_sendMotorSpeed() {
+	uint32_t sml, smr;
 	pre_buf[0] = MOTOR_SPEED_HEADER;
 
-	periph_spi_sendBuf(pre_buf, 1);
+	sml = 0; // TODO control_getVelE();
+	smr = 0; // TODO control_getVelD();
+
+	pre_buf[1] = (uint8_t) (sml >> 24);
+	pre_buf[2] = (uint8_t) (sml >> 16);
+	pre_buf[3] = (uint8_t) (sml >> 8);
+	pre_buf[4] = (uint8_t) sml;
+
+	pre_buf[5] = (uint8_t) (smr >> 24);
+	pre_buf[6] = (uint8_t) (smr >> 16);
+	pre_buf[7] = (uint8_t) (smr >> 8);
+	pre_buf[8] = (uint8_t) smr;
+
+	periph_spi_sendBuf(pre_buf, 9);
 }
 
 void periph_spi_sendSelectedMove(uint8_t move) {

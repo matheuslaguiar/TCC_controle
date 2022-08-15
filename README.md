@@ -39,7 +39,7 @@ O cabeçalho é composto por 1 byte, indicando qual a informação a ser enviada
 | Corrente dos motores | 0x02 | 4 bytes | 2 bytes | 1 |
 | Potência do motor esquerdo | 0x03 | 1 byte | 2 bytes | 0 |
 | Potência do motor direito | 0x04 | 1 byte | 2 bytes | 0 |
-| Velocidade dos motores | 0x05 | verificar | 2 bytes | verificar |
+| Velocidade dos motores | 0x05 | 8 bytes | 2 bytes | 1 |
 | Jogada em execução | 0x06 | 1 byte | 2 bytes | 0 |
 
 ### Tensão da bateria
@@ -52,7 +52,7 @@ O valor da corrente é o dado em passos de 10 [mA]. Os 2 primeiros bytes são re
 O valor dado é um inteiro entre 0 e 127, em que 0 significa totalmente para trás, 64 parado, e 127 totalmente para frente.
 
 ### Velocidade dos motores
-verificar
+A velocidade é dada em micrometros por segundo. Os 4 primeiros bytes são referentes ao motor esquerdo, e os 4 bytes posteriores são referentes ao motor direito.
 
 ### Jogada em execução
 O valor indica qual a jogada está sendo executada. O último valor enviado é aquele a ser considerado como jogada em execução.
