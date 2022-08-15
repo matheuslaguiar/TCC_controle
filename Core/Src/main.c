@@ -63,6 +63,8 @@ int32_t Radio3, Radio4, Radio5;
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
+void DWT_Init(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -157,7 +159,7 @@ int main(void)
 //		  bluetoothPrintVal(Current_MR);
 //		  bluetoothPrint((uint8_t*) "\n\n");
 
-		  // PRINT EVERY 200 ms
+		  // PRINT EVERY 1000 ms
 		  if(HAL_GetTick() % 1000 < 100 && !lock){
 			  lock = 1;
 			  bluetoothPrint((uint8_t*) "\n--------------------------\nEncoder DIR:");
@@ -245,6 +247,17 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/*
+ * Inicializa o DWT para contagem de ciclos
+ * */
+void DWT_Init(void) {
+	if (ARM_CM_DWT_CTRL != 0) {        // See if DWT is available
+		ARM_CM_DEMCR      |= 1 << 24;  // Set bit 24
+		ARM_CM_DWT_CYCCNT  = 0;		   // Reset the count
+		ARM_CM_DWT_CTRL   |= 1 << 0;   // Set bit 0
+	}
+}
 
 /* USER CODE END 4 */
 

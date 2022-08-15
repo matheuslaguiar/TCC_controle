@@ -77,7 +77,10 @@ void Error_Handler(void);
 #define SPI1_CS_Pin GPIO_PIN_6
 #define SPI1_CS_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-
+// Para uso do DWT
+#define  ARM_CM_DEMCR      (*(uint32_t *)0xE000EDFC)
+#define  ARM_CM_DWT_CTRL   (*(uint32_t *)0xE0001000)
+#define  ARM_CM_DWT_CYCCNT (*(uint32_t *)0xE0001004)
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

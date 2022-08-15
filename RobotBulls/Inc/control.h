@@ -15,4 +15,12 @@
 int32_t control_getPulsoDir();
 int32_t control_getPulsoEsq();
 
+/*
+	Global variables
+ */
+uint32_t des_d, des_e;
+uint32_t vel_d, vel_e; 	// velocidade escalar
+uint32_t w_d, w_e;		// velocidade angular
+
+
 #endif /* INC_CONTROL_H_ */
