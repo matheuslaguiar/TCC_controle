@@ -13,6 +13,9 @@ int32_t pulso_esq = 0;
 uint32_t at;
 uint32_t ultimo_t_dir = 0, delta_t_dir = 0;
 uint32_t ultimo_t_esq = 0, delta_t_esq = 0;
+uint32_t des_d, des_e;
+uint32_t vel_d, vel_e; 	// velocidade escalar
+uint32_t w_d, w_e;		// velocidade angular
 
 uint32_t outros = 0;
 
@@ -59,6 +62,16 @@ int32_t control_getPulsoDir()
 int32_t control_getPulsoEsq()
 {
 	return pulso_esq;
+}
+
+uint32_t control_getVelD()
+{
+	return vel_d;
+}
+
+uint32_t control_getVelE()
+{
+	return vel_e;
 }
 
 void control_setPulsoDir(int32_t value)
