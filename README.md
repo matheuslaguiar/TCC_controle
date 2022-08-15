@@ -29,6 +29,34 @@ A tabela a seguir indica os pinos utilizados do microcontrolador, seguido por su
 | PB5  | SPI Master Output Slave Input               | SPI1_MOSI    |
 | PB6  | SPI Chip Select                             | SPI1_CS      |
 
+## Protocolo de comunicação
+O microcontrolador irá se comunicar com o ESP32 utilizando SPI, e o buffer enviado seguirá um protocolo próprio de comunicação, que é detalhado a seguir. Devido a uma limitação do ESP32, todos os pacotes enviados deverão conter uma quantidade de bytes múltipla de 4, por isso, todos os pacotes que não atenderem a este requisito será completado com bytes nulos.
+O cabeçalho é composto por 1 byte, indicando qual a informação a ser enviada. Logo após, haverá a carga útil do pacote, que varia o seu tamanho de acordo com a informação a ser enviada. Por fim, serão enviados 2 bytes de verificação, que utilização o algoritmo CRC-16/XMODEM para cálculo.
+
+| Informação        | Cabeçalho | Carga útil | CRC-16 | Quantidade de bytes 0x00 |
+|-------------------|-----------|------------|--------|--------------------------|
+| Tensão da bateria | 0x01 | 2 bytes | 2 bytes | 3 |
+| Corrente dos motores | 0x02 | 4 bytes | 2 bytes | 1 |
+| Potência do motor esquerdo | 0x03 | 1 byte | 2 bytes | 0 |
+| Potência do motor direito | 0x04 | 1 byte | 2 bytes | 0 |
+| Velocidade dos motores | 0x05 | verificar | 2 bytes | verificar |
+| Jogada em execução | 0x06 | 1 byte | 2 bytes | 0 |
+
+### Tensão da bateria
+O valor enviado é a tensão em passos de 0,1 [V].
+
+### Corrente dos motores
+O valor da corrente é o dado em passos de 10 [mA]. Os 2 primeiros bytes são referentes à corrente do motor esquerdo, e os 2 subsequentes ao motor direito.
+
+### Potência dos motores
+O valor dado é um inteiro entre 0 e 127, em que 0 significa totalmente para trás, 64 parado, e 127 totalmente para frente.
+
+### Velocidade dos motores
+verificar
+
+### Jogada em execução
+O valor indica qual a jogada está sendo executada. O último valor enviado é aquele a ser considerado como jogada em execução.
+
 ## Componentes
 ### Bluetooth
 Essa componente faz o intermédio da comunicação UART do microcontrolador com o módulo Bluetooth HC05. A conectividade ocorre por meio da USART3, configurada de modo assíncrono, com baud rate de 115200 Bits/s, tamanho da palavra de 8 bits, sem bit de paridade e 1 bit de parada.
