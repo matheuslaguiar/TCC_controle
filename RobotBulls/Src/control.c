@@ -21,26 +21,29 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	switch (GPIO_Pin) {
 	case ENC_DIR_Pin:
 	{
-		// TODO verificar os valores
 		at = ARM_CM_DWT_CYCCNT;
-		delta_t_dir = (at - ultimo_t_dir) /
-				(HAL_RCC_GetHCLKFreq()/1000000);
+		// delta_t [us]
+		delta_t_dir = (at - ultimo_t_dir) / (HAL_RCC_GetHCLKFreq()/1000000);
 		ultimo_t_dir = at;
 		pulso_dir++;
+
 		des_d += 4369;
-		vel_d = (uint32_t)((uint64_t)4368777284/delta_t_dir);
+
+		// vel [micrometros/s]
+		vel_d = (uint32_t)(4368777/delta_t_dir);
 		break;
 	}
 	case ENC_ESQ_Pin:
 	{
-		// TODO verificar os valores
 		at = ARM_CM_DWT_CYCCNT;
-		delta_t_esq = (at - ultimo_t_esq) /
-				(HAL_RCC_GetHCLKFreq()/1000000);
+		// delta_t [us]
+		delta_t_esq = (at - ultimo_t_esq) / (HAL_RCC_GetHCLKFreq()/1000000);
 		ultimo_t_esq = at;
 		pulso_esq++;
 		des_e += 4369;
-		vel_e = (uint32_t)((uint64_t)4368777284/delta_t_esq);
+
+		// vel [micrometros/s]
+		vel_e = (uint32_t)(4368777/delta_t_esq);
 		break;
 	}
 	default:
@@ -58,3 +61,12 @@ int32_t control_getPulsoEsq()
 	return pulso_esq;
 }
 
+void control_setPulsoDir(int32_t value)
+{
+	pulso_dir = value;
+}
+
+void control_setPulsoEsq(int32_t value)
+{
+	pulso_esq = value;
+}

@@ -15,6 +15,10 @@
 int32_t control_getPulsoDir();
 int32_t control_getPulsoEsq();
 
+// Setters
+void control_setPulsoDir(int32_t value);
+void control_setPulsoEsq(int32_t value);
+
 /*
 	Global variables
  */
