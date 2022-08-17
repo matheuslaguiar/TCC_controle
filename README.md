@@ -52,7 +52,7 @@ O valor da corrente é o dado em passos de 10 [mA]. Os 2 primeiros bytes são re
 O valor dado é um inteiro entre 0 e 127, em que 0 significa totalmente para trás, 64 parado, e 127 totalmente para frente.
 
 ### Velocidade dos motores
-A velocidade é dada em micrometros por segundo. Os 4 primeiros bytes são referentes ao motor esquerdo, e os 4 bytes posteriores são referentes ao motor direito.
+A velocidade é dada em micrometros por segundo. Os 4 primeiros bytes são referentes ao motor esquerdo, e os 4 bytes subsequentes são referentes ao motor direito.
 
 ### Jogada em execução
 O valor indica qual a jogada está sendo executada. O último valor enviado é aquele a ser considerado como jogada em execução.
