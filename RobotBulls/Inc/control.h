@@ -14,5 +14,11 @@
 // Getters
 int32_t control_getPulsoDir();
 int32_t control_getPulsoEsq();
+uint32_t control_getVelD();
+uint32_t control_getVelE();
+
+// Setters
+void control_setPulsoDir(int32_t value);
+void control_setPulsoEsq(int32_t value);
 
 #endif /* INC_CONTROL_H_ */

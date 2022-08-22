@@ -22,6 +22,7 @@
 #include "adc.h"
 #include "dma.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -109,9 +110,11 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART3_UART_Init();
   MX_SPI1_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
   user_adc_Init();
+  HAL_TIM_Base_Start_IT(&htim3);
   bluetoothPrint((uint8_t*) "Bem vindo :D\n");
   motorL(0);
   motorR(0);
@@ -141,6 +144,8 @@ int main(void)
 //		  bluetoothPrintVal(Radio5);
 		  Radio4 = readPWM(Radio4_GPIO_Port, Radio4_Pin);
 		  Radio5 = readPWM(Radio5_GPIO_Port, Radio5_Pin);
+		  Radio4 = ((Radio4 - 1500) * 63) / 500;
+		  Radio5 = ((Radio5 - 1500) * 63) / 500;
 
 		  val_MR = (Radio4 + Radio5);
 		  val_MR = val_MR > 63 ? 63 : val_MR;
@@ -157,13 +162,17 @@ int main(void)
 //		  bluetoothPrintVal(Current_MR);
 //		  bluetoothPrint((uint8_t*) "\n\n");
 
-		  // PRINT EVERY 200 ms
+		  // PRINT EVERY 1000 ms
 		  if(HAL_GetTick() % 1000 < 100 && !lock){
 			  lock = 1;
 			  bluetoothPrint((uint8_t*) "\n--------------------------\nEncoder DIR:");
 			  bluetoothPrintVal(control_getPulsoDir());
+			  bluetoothPrint((uint8_t*) "\nVelD: ");
+			  bluetoothPrintVal(control_getVelD());
 			  bluetoothPrint((uint8_t*) "\n\nEncoder ESQ:");
 			  bluetoothPrintVal(control_getPulsoEsq());
+			  bluetoothPrint((uint8_t*) "\nVelE: ");
+			  bluetoothPrintVal(control_getVelE());
 			  bluetoothPrint((uint8_t*)"\n--------------------------\n");
 		  }
 		  else {
