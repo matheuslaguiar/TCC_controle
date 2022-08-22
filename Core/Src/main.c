@@ -186,15 +186,28 @@ int main(void)
 		  // PRINT EVERY 1000 ms
 		  if(HAL_GetTick() % 1000 == 0 && !lock){
 			  lock = 1;
-			  if(alternador){
-				  if(periph_spi_sendBuf((uint8_t*) "VAI PALMEIRASSSSSSS", 19) != HAL_OK)
-					  bluetoothPrint((uint8_t *)"\nALGO DE ERRADO NAO ESTA CERTO NO SPI\n");
-			  }
-			  else{
-				  if(periph_spi_sendBuf((uint8_t*) "AaAAAaAAAAAaA", 13) != HAL_OK)
-					  bluetoothPrint((uint8_t *)"\nALGO DE ERRADO NAO ESTA CERTO NO SPI\n");
-			  }
-			  alternador = !alternador;
+			  switch (alternador) {
+				case 0:
+					periph_spi_sendBatteryVoltage();
+					break;
+				case 1:
+					periph_spi_sendLeftMotorPower(-63);
+					break;
+				case 2:
+					periph_spi_sendMotorCurrent();
+					break;
+				case 3:
+					periph_spi_sendMotorSpeed();
+					break;
+				case 4:
+					periph_spi_sendRightMotorPower(63);
+					break;
+				case 5:
+					periph_spi_sendSelectedMove(TESTE_SPI);
+					break;
+			}
+			alternador++;
+			alternador %=6;
 		  }
 		  else
 			  lock = 0;

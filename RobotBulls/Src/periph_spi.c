@@ -9,19 +9,32 @@
 #include "string.h"
 #include "periph_spi.h"
 #include "spi.h"
+#include "motor.h"
 
+/* Private defines -----------------------------------------------------------*/
 #define SPI_TIMEOUT		(0xFFFFFFFFU)
 
 #ifndef SPI_BUFFER_SIZE
 #define SPI_BUFFER_SIZE	(128)
 #endif
 
-static uint8_t spi_buffer[SPI_BUFFER_SIZE];
+#define BATTERY_VOLTAGE_HEADER          0x01
+#define MOTOR_CURRENT_HEADER            0x02
+#define LEFT_MOTOR_POWER_HEADER         0x03
+#define RIGHT_MOTOR_POWER_HEADER        0x04
+#define MOTOR_SPEED_HEADER              0x05
+#define SELECTED_MOVE_HEADER	        0x06
 
+/* Private variables ---------------------------------------------------------*/
+static uint8_t spi_buffer[SPI_BUFFER_SIZE];
+static uint8_t pre_buf[SPI_BUFFER_SIZE - 2]; // BUFFER SIZE - CRC16 SIZE
+
+/* Private functions declaration ---------------------------------------------*/
 static void startComunication();
 static void finishComunication();
 static uint16_t crc16(uint8_t *packet, uint8_t nBytes);
 
+/* Public functions implementation -------------------------------------------*/
 uint32_t periph_spi_sendBuf(uint8_t * buffer, uint32_t length)
 {
 	HAL_StatusTypeDef status;
@@ -56,7 +69,73 @@ uint32_t periph_spi_sendBuf(uint8_t * buffer, uint32_t length)
 	return status;
 }
 
+void periph_spi_sendBatteryVoltage() {
+	uint16_t batt = readBattery();
 
+	pre_buf[0] = BATTERY_VOLTAGE_HEADER;
+
+	pre_buf[1] = (uint8_t) (batt >> 8);
+	pre_buf[2] = (uint8_t) batt;
+
+	periph_spi_sendBuf(pre_buf, 3);
+}
+
+void periph_spi_sendMotorCurrent() {
+	uint16_t cml, cmr;
+	readMotorCurrent(&cml, &cmr);
+	pre_buf[0] = MOTOR_CURRENT_HEADER;
+
+	pre_buf[1] = (uint8_t) (cml >> 8);
+	pre_buf[2] = (uint8_t) cml;
+
+	pre_buf[3] = (uint8_t) (cmr >> 8);
+	pre_buf[4] = (uint8_t) cmr;
+
+	periph_spi_sendBuf(pre_buf, 5);
+}
+
+void periph_spi_sendLeftMotorPower(int8_t value) {
+	pre_buf[0] = LEFT_MOTOR_POWER_HEADER;
+	pre_buf[1] = (uint8_t) (value + 64);
+
+	periph_spi_sendBuf(pre_buf, 2);
+}
+
+void periph_spi_sendRightMotorPower(int8_t value){
+	pre_buf[0] = RIGHT_MOTOR_POWER_HEADER;
+	pre_buf[1] = (uint8_t) (value + 64);
+
+	periph_spi_sendBuf(pre_buf, 2);
+}
+
+void periph_spi_sendMotorSpeed() {
+	uint32_t sml, smr;
+	pre_buf[0] = MOTOR_SPEED_HEADER;
+
+	sml = 0; // TODO control_getVelE();
+	smr = 0; // TODO control_getVelD();
+
+	pre_buf[1] = (uint8_t) (sml >> 24);
+	pre_buf[2] = (uint8_t) (sml >> 16);
+	pre_buf[3] = (uint8_t) (sml >> 8);
+	pre_buf[4] = (uint8_t) sml;
+
+	pre_buf[5] = (uint8_t) (smr >> 24);
+	pre_buf[6] = (uint8_t) (smr >> 16);
+	pre_buf[7] = (uint8_t) (smr >> 8);
+	pre_buf[8] = (uint8_t) smr;
+
+	periph_spi_sendBuf(pre_buf, 9);
+}
+
+void periph_spi_sendSelectedMove(uint8_t move) {
+	pre_buf[0] = SELECTED_MOVE_HEADER;
+	pre_buf[1] = move;
+
+	periph_spi_sendBuf(pre_buf, 2);
+}
+
+/* Private functions implementation ------------------------------------------*/
 static void startComunication(){
 	// Reset chip select pin
 	HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
