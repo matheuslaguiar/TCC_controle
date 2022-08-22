@@ -22,6 +22,7 @@
 #include "adc.h"
 #include "dma.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -62,8 +63,6 @@ int32_t Radio3, Radio4, Radio5;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
-void DWT_Init(void);
 
 /* USER CODE END PFP */
 
@@ -111,9 +110,11 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART3_UART_Init();
   MX_SPI1_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
   user_adc_Init();
+  HAL_TIM_Base_Start_IT(&htim3);
   bluetoothPrint((uint8_t*) "Bem vindo :D\n");
   motorL(0);
   motorR(0);
@@ -143,6 +144,8 @@ int main(void)
 //		  bluetoothPrintVal(Radio5);
 		  Radio4 = readPWM(Radio4_GPIO_Port, Radio4_Pin);
 		  Radio5 = readPWM(Radio5_GPIO_Port, Radio5_Pin);
+		  Radio4 = ((Radio4 - 1500) * 63) / 500;
+		  Radio5 = ((Radio5 - 1500) * 63) / 500;
 
 		  val_MR = (Radio4 + Radio5);
 		  val_MR = val_MR > 63 ? 63 : val_MR;
@@ -164,8 +167,12 @@ int main(void)
 			  lock = 1;
 			  bluetoothPrint((uint8_t*) "\n--------------------------\nEncoder DIR:");
 			  bluetoothPrintVal(control_getPulsoDir());
+			  bluetoothPrint((uint8_t*) "\nVelD: ");
+			  bluetoothPrintVal(control_getVelD());
 			  bluetoothPrint((uint8_t*) "\n\nEncoder ESQ:");
 			  bluetoothPrintVal(control_getPulsoEsq());
+			  bluetoothPrint((uint8_t*) "\nVelE: ");
+			  bluetoothPrintVal(control_getVelE());
 			  bluetoothPrint((uint8_t*)"\n--------------------------\n");
 		  }
 		  else {
@@ -247,17 +254,6 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
-/*
- * Inicializa o DWT para contagem de ciclos
- * */
-void DWT_Init(void) {
-	if (ARM_CM_DWT_CTRL != 0) {        // See if DWT is available
-		ARM_CM_DEMCR      |= 1 << 24;  // Set bit 24
-		ARM_CM_DWT_CYCCNT  = 0;		   // Reset the count
-		ARM_CM_DWT_CTRL   |= 1 << 0;   // Set bit 0
-	}
-}
 
 /* USER CODE END 4 */
 

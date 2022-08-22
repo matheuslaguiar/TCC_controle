@@ -6,13 +6,23 @@
  *      Author: Matheus Lemos de Aguiar
  */
 
-#include "main.h"
 #include "pcs.h"
 #include "motor.h"
 
 #ifndef TIME_OUT_PWM
 #define TIME_OUT_PWM (30)
 #endif
+
+/*
+ * Inicializa o DWT para contagem de ciclos
+ * */
+void DWT_Init(void) {
+	if (ARM_CM_DWT_CTRL != 0) {        // See if DWT is available
+		ARM_CM_DEMCR      |= 1 << 24;  // Set bit 24
+		ARM_CM_DWT_CYCCNT  = 0;		   // Reset the count
+		ARM_CM_DWT_CTRL   |= 1 << 0;   // Set bit 0
+	}
+}
 
 /*
  * Le o valor PWM recebido do radio
@@ -36,7 +46,6 @@ int32_t readPWM (GPIO_TypeDef *GPIO_PWM, uint16_t GPIO_Pin_PWM) {
 	 * TIME_OUT_PWM = 30 ms
 	 * */
 	uint32_t initial_tick;
-	uint32_t valor;
 	initial_tick = HAL_GetTick();
 
 	// Espera encerrar o pulso atual (caso esteja no meio)
@@ -52,7 +61,7 @@ int32_t readPWM (GPIO_TypeDef *GPIO_PWM, uint16_t GPIO_Pin_PWM) {
 	}
 
 	// Reset the count
-	valor = ARM_CM_DWT_CYCCNT;
+	ARM_CM_DWT_CYCCNT  = 0;
 
 	// espera terminar o pulso em HIGH
 	while(HAL_GPIO_ReadPin(GPIO_PWM, GPIO_Pin_PWM)) {
@@ -61,7 +70,7 @@ int32_t readPWM (GPIO_TypeDef *GPIO_PWM, uint16_t GPIO_Pin_PWM) {
 	}
 
 	// numero de ciclos em alta / f[MHz] = t_HIGH [us]
-	valor = (ARM_CM_DWT_CYCCNT-valor) / (HAL_RCC_GetHCLKFreq()/1000000);
+	const int32_t valor = ARM_CM_DWT_CYCCNT / (HAL_RCC_GetHCLKFreq()/1000000);
 
 	// Regulagem do sinal
 	if(valor < 1100)
