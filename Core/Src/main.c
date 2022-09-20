@@ -30,6 +30,7 @@
 /* USER CODE BEGIN Includes */
 #include "bluetooth.h"
 #include "control.h"
+#include "dwt.h"
 #include "user_adc.h"
 #include "pcs.h"
 #include "motor.h"
