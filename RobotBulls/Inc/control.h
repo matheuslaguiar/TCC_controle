@@ -16,6 +16,8 @@ int32_t control_getPulsoDir();
 int32_t control_getPulsoEsq();
 uint32_t control_getVelD();
 uint32_t control_getVelE();
+uint32_t control_getDesD();
+uint32_t control_getDesE();
 
 // Setters
 void control_setPulsoDir(int32_t value);
