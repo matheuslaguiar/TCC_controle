@@ -20,6 +20,7 @@ uint32_t control_getDesD();
 uint32_t control_getDesE();
 
 // Setters
+void control_setPose(int32_t x, int32_t y, float theta);
 void control_setPulsoDir(int32_t value);
 void control_setPulsoEsq(int32_t value);
 

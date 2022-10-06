@@ -24,13 +24,20 @@ uint32_t ultimo_pulso_esq = 0;
 uint32_t des_d, des_e; // deslocamento da roda [um]
 volatile uint32_t vel_d, vel_e; // velocidade escalar [um/s]
 volatile float w_d, w_e;		// velocidade angular [°/s]
-
-struct {
+typedef long long int ll;
+typedef struct {
 	int32_t d_x; // TODO analyze if it must be integer float
 	int32_t d_y; // TODO analyze if it must be integer float
 	float d_theta; // TODO analyze if it must be integer float
-} d_pose;
+} derivadaPose_t;
+derivadaPose_t d_pose;
 
+typedef struct {
+	int32_t x;
+	int32_t y;
+	float theta;
+} Pose_t;
+Pose_t pose = {0,0,0};
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	// deslocamento = 1 pulso = 4368,77728 um
@@ -56,7 +63,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	static float theta = 0;
 	static int a=0;
 
 	// TIM3 Period = 50 ms
@@ -78,12 +84,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 		d_pose.d_theta = (((float)vel_d-(float)vel_e) / DIST_B_um);
 
-		theta = theta + (d_pose.d_theta * 0.05);
+		pose.theta += (d_pose.d_theta * 0.05);
 
 		// d_x = c*(wd+we)/2 * sen(theta)
-		d_pose.d_x = (int32_t)((RADIO_C_um * ((w_d+w_e)/2)) * sin(theta));
+		d_pose.d_x = (int32_t)((RADIO_C_um * ((w_d+w_e)/2)) * sin(pose.theta));
+		pose.x += (int32_t)(d_pose.d_x*0.05);
+
 		// d_y = c*(wd+we)/2 * cos(theta)
-		d_pose.d_y = (int32_t)((RADIO_C_um * ((w_d+w_e)/2)) * cos(theta));
+		d_pose.d_y = (int32_t)((RADIO_C_um * ((w_d+w_e)/2)) * cos(pose.theta));
+		pose.y += (int32_t)(d_pose.d_y*0.05);
 
 		ultimo_pulso_dir = pulso_dir;
 		ultimo_pulso_esq = pulso_esq;
@@ -91,18 +100,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	/* Prints every 10*50ms = 0,5s */
 	if(a == 10){
 		a=0;
-		bluetoothPrint("theta: ");
-		bluetoothPrintVal(((int32_t)(theta*57.2958))%360);
-		bluetoothPrint("°\n");
-		bluetoothPrint("dx: ");
-		bluetoothPrintVal(d_pose.d_x);
-		bluetoothPrint(" um/s\n");
-		bluetoothPrint("dy: ");
-		bluetoothPrintVal(d_pose.d_y);
-		bluetoothPrint(" um/s\n");
-		bluetoothPrint("d theta: ");
-		bluetoothPrintVal(((int32_t)(d_pose.d_theta*57.2958))%360);
-		bluetoothPrint("°/s\n-------------\n");
+		bluetoothPrint((uint8_t *)"theta: ");
+		bluetoothPrintVal(((int32_t)(pose.theta*57.2958))%360);
+		bluetoothPrint((uint8_t *)"°\n");
+		bluetoothPrint((uint8_t *)"x: ");
+		bluetoothPrintVal(pose.x);
+		bluetoothPrint((uint8_t *)" um\n");
+		bluetoothPrint((uint8_t *)"y: ");
+		bluetoothPrintVal(pose.y);
+		bluetoothPrint((uint8_t *)" um\n");
+		bluetoothPrint((uint8_t *)"\n-----------------\n");
 	}
 }
 
@@ -135,6 +142,13 @@ uint32_t control_getDesD()
 uint32_t control_getDesE()
 {
 	return des_e;
+}
+
+void control_setPose(int32_t x, int32_t y, float theta)
+{
+	pose.x = x;
+	pose.y = y;
+	pose.theta = theta;
 }
 
 void control_setPulsoDir(int32_t value)
