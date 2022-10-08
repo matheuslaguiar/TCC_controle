@@ -123,6 +123,9 @@ int main(void)
   // Help variableS
   uint8_t lock = 0;
   uint8_t alternador = 0;
+
+  int32_t ang_degrees;
+  uint8_t aux[20];
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -132,8 +135,30 @@ int main(void)
   {
 	  switch (state_machine)
 	  {
+	  case JOGADA_STOP:
+		  motorL(0);
+		  motorR(0);
+		  HAL_Delay(2000);
+
+		  break;
 	  case CONFIG:
-		  state_machine = JOGADA_RC;
+		  aux[0] = 0;
+		  HAL_UART_Receive(&huart3, (uint8_t *)aux, 3, 100);
+		  if(!aux[0])
+		  {
+			  state_machine = CONFIG;
+		  }
+		  else{
+			  if(aux[0] != '-')
+				  ang_degrees = (aux[0]-'0')*10 + (aux[1]-'0');
+			  else	ang_degrees = (-1)*((aux[1]-'0')*10 + (aux[2]-'0'));
+			  bluetoothPrint("\nAng: ");
+			  bluetoothPrintVal(ang_degrees);
+			  bluetoothPrint("°\n");
+			  control_setThetaSetPoint(ang_degrees*0.0174533);
+
+			  state_machine = JOGADA_GIRO;
+		  }
 		  break;
 
 /* END CONFIG STATE ***********************************************************/
@@ -164,24 +189,32 @@ int main(void)
 //		  bluetoothPrint((uint8_t*) "\n\n");
 
 		  // PRINT EVERY 1000 ms
-		  if(HAL_GetTick() % 1000 < 100 && !lock){
-			  lock = 1;
-			  bluetoothPrint((uint8_t*) "\n--------------------------\nEncoder DIR:");
-			  bluetoothPrintVal(control_getPulsoDir());
-			  bluetoothPrint((uint8_t*) "\nVelD: ");
-			  bluetoothPrintVal(control_getVelD());
-			  bluetoothPrint((uint8_t*) "\n\nEncoder ESQ:");
-			  bluetoothPrintVal(control_getPulsoEsq());
-			  bluetoothPrint((uint8_t*) "\nVelE: ");
-			  bluetoothPrintVal(control_getVelE());
-			  bluetoothPrint((uint8_t*)"\n--------------------------\n");
-		  }
-		  else {
-			  lock = 0;
-		  }
+//		  if(HAL_GetTick() % 1000 < 100 && !lock){
+//			  lock = 1;
+//			  bluetoothPrint((uint8_t*) "\n--------------------------\nEncoder DIR:");
+//			  bluetoothPrintVal(control_getDesD());
+//			  bluetoothPrint((uint8_t*) "\nVelD: ");
+//			  bluetoothPrintVal(control_getVelD());
+//			  bluetoothPrint((uint8_t*) "\n\nEncoder ESQ:");
+//			  bluetoothPrintVal(control_getDesE());
+//			  bluetoothPrint((uint8_t*) "\nVelE: ");
+//			  bluetoothPrintVal(control_getVelE());
+//			  bluetoothPrint((uint8_t*)"\n--------------------------\n");
+//		  }
+//		  else {
+//			  lock = 0;
+//		  }
 
 		  break;
+
 /* END RC STATE ***************************************************************/
+	  case JOGADA_GIRO:
+		  if(control_rotacao())
+			  state_machine = JOGADA_STOP;
+
+		  HAL_Delay(10);
+		  break;
+/* END GIRO *******************************************************************/
 	  case TESTE_SPI:
 
 		  // PRINT EVERY 1000 ms

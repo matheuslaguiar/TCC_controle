@@ -14,6 +14,8 @@
 /* JOGADAS SUMO 3KG*/
 typedef enum {
 	CONFIG = -1,
+	JOGADA_STOP,
+	JOGADA_GIRO,
 	JOGADA_RC,
 	TESTE_SPI,
 } jogada3Kg_TypeDef;
