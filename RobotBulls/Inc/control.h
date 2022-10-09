@@ -11,7 +11,10 @@
 #ifndef INC_CONTROL_H_
 #define INC_CONTROL_H_
 
+bool control_process();
 void control_setThetaSetPoint(float theta_sp);
+void control_setXYSetPoint(int32_t x_sp, int32_t y_sp);
+bool control_reta();
 bool control_rotacao();
 
 // Getters

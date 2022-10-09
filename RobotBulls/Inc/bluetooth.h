@@ -19,6 +19,7 @@ typedef enum {
 	JOGADA_STOP,
 	JOGADA_GIRO,
 	JOGADA_RETO,
+	JOGADA_POS,
 	JOGADA_RC,
 	TESTE_SPI,
 } jogada3Kg_TypeDef;

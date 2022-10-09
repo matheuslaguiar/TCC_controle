@@ -21,10 +21,12 @@
 #define RADIO_C_um			(22250)	// 44,5mm/2 = 22,25mm
 #define DIST_B_um			(107000)	// 107 mm
 
-#define TOLERANCIA_RAD 		(0.035)	// Aprox. 5,7°
-#define	TOLERANCIA_um		(10000)	// 10mm
+#define TOLERANCIA_MAX_RAD	(0.0872665)	// 0.0872665 = 5°
+#define TOLERANCIA_RAD 		(0.035)		// 0.035 = 2°
+#define	TOLERANCIA_um		(50000)	// 50mm
 
-float kp=20, kd=5;
+float kp_rotacao=20, kd_rotacao=5;
+float kp_reta=0.00006, kd_reta=0.00006;
 static int16_t potDir=0, potEsq=0;
 
 int32_t pulso_dir = 0;
@@ -38,9 +40,9 @@ volatile int32_t vel_d, vel_e; // velocidade escalar [um/s]
 volatile float w_d, w_e;		// velocidade angular [°/s]
 
 typedef struct {
-	int32_t d_x; // TODO analyze if it must be integer float
-	int32_t d_y; // TODO analyze if it must be integer float
-	float d_theta; // TODO analyze if it must be integer float
+	int32_t d_x;
+	int32_t d_y;
+	float d_theta;
 } derivadaPose_t;
 derivadaPose_t d_pose;
 
@@ -56,8 +58,107 @@ Pose_t poseSetPoint;
 /* Private function prototypes -----------------------------------------------*/
 static void get_error(Pose_t *p_err, Pose_t sp);
 static void get_d_error(derivadaPose_t *p_dErr, Pose_t err, Pose_t last_err);
+static float get_thetaSp(float delta_x, float delta_y);
 
+static int32_t get_dist(Pose_t A, Pose_t B);
 /* Public functions implementation -------------------------------------------*/
+bool control_process()
+{
+	static float theta_sp, err_theta;
+
+
+	theta_sp = get_thetaSp((float)(poseSetPoint.x-pose.x),
+			(float)(poseSetPoint.y-pose.y));
+
+	err_theta = theta_sp-pose.theta;
+
+	bluetoothPrint((uint8_t *)"theta_sp: ");
+	bluetoothPrintVal(theta_sp*57.2958);
+	bluetoothPrint((uint8_t *)" °\n");
+	// theta com erro > TOLERANCIA_MAX_RAD
+	if(!((err_theta>0 && err_theta<TOLERANCIA_MAX_RAD)
+			|| (err_theta<0 && err_theta>-TOLERANCIA_MAX_RAD)))
+	{
+		motorL(potDir=0);
+		motorR(potEsq=0);
+		HAL_Delay(50);
+		control_setThetaSetPoint(theta_sp);
+		while(!control_rotacao())
+		{
+			HAL_Delay(10);
+		}
+	}
+
+	return control_reta();
+}
+
+bool control_reta()
+{
+	static int32_t err = 0, last_err;
+	static int32_t d_err = 0;
+
+	static uint32_t a = 0;
+	last_err = err;
+	err = get_dist(poseSetPoint, pose);
+	d_err = err - last_err;
+
+	if((err < TOLERANCIA_um && err >= 0) || (err > -TOLERANCIA_um && err < 0))
+	{
+		motorL(potDir = 0);
+		motorR(potEsq = 0);
+		HAL_Delay(50);
+		return true;
+	}
+	if(a++ == 5){
+		bluetoothPrint((uint8_t *)"Err: ");
+		bluetoothPrintVal(err);
+		bluetoothPrint((uint8_t *)" um\n");
+		bluetoothPrint((uint8_t *)"dErr: ");
+		bluetoothPrintVal(d_err);
+		bluetoothPrint((uint8_t *)" um/s\n");
+		bluetoothPrint((uint8_t *)"Pot Dir: ");
+		bluetoothPrintVal(potDir);
+		bluetoothPrint((uint8_t *)"\n");
+		bluetoothPrint((uint8_t *)"Pot Esq: ");
+		bluetoothPrintVal(potEsq);
+		bluetoothPrint((uint8_t *)"\n");
+		a = 0;
+	}
+
+	potDir = (int16_t)(kp_reta*err + kd_reta*d_err);
+	potEsq = potDir;
+
+	if(!potDir) { // muito proximo de 0, a ponto de arredondar pra 0
+		potDir = 15, potEsq = 15;
+	}
+
+	// adequar os valores de potencia
+	if(potDir>63)
+		potDir = 63;
+	else if(potDir < -63)
+		potDir = -63;
+	if(potEsq>63)
+		potEsq = 63;
+	else if(potEsq < -63)
+		potEsq = -63;
+
+	if(potEsq>0 && potEsq<15)
+		potEsq = 15;
+
+	if(potEsq<0 && potEsq>-15)
+		potEsq = -15;
+
+	if(potDir>0 && potDir<15)
+		potDir = 15;
+	if(potDir<0 && potDir>-15)
+		potDir = -15;
+
+	// Envia potencia pros motores
+	motorL(potEsq);
+	motorR(potDir);
+
+	return false;
+}
 
 bool control_rotacao()
 {
@@ -74,19 +175,22 @@ bool control_rotacao()
 
 	if(err.theta>(-TOLERANCIA_RAD) && err.theta<(TOLERANCIA_RAD))
 	{
-		potDir = 0;
-		potEsq = 0;
+		motorR(potDir = 0);
+		motorL(potEsq = 0);
+		HAL_Delay(50);
 		return true;
 	}
 
-	potDir = (int16_t)(kp*err.theta + kd*d_err.d_theta);
+	potDir = (int16_t)(kp_rotacao*err.theta + kd_rotacao*d_err.d_theta);
 	potEsq = -potDir;
 	if(!potDir) { // muito proximo de 0, a ponto de arredondar pra 0
-		if((kp*err.theta + kd*d_err.d_theta) > 0)
+		if((kp_rotacao*err.theta + kd_rotacao*d_err.d_theta) > 0)
 			potDir = 18, potEsq = -18;
+		else
+			potDir = -18, potEsq = 18;
 	}
 
-	// TODO adequar os valores de potencia
+	// adequar os valores de potencia
 	if(potDir>63)
 		potDir = 63;
 	else if(potDir < -63)
@@ -115,11 +219,23 @@ bool control_rotacao()
 }
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+	static int32_t ultPotDir, ultPotEsq;
 	// deslocamento = 1 pulso = 4368,77728 um
 	switch (GPIO_Pin) {
 	case ENC_DIR_Pin:
 	{
 		if(potDir < 0){
+			pulso_dir--;
+			des_d -= 4369;
+			ultPotDir = potDir;
+		}
+		else if (potDir){
+			pulso_dir++;
+			des_d += 4369;
+			ultPotDir = potDir;
+		}
+		// SITUAÇÕES EM INÉRCIA :
+		else if (ultPotDir < 0){
 			pulso_dir--;
 			des_d -= 4369;
 		}
@@ -135,6 +251,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	case ENC_ESQ_Pin:
 	{
 		if(potEsq < 0) {
+			pulso_esq--;
+			des_e -= 4369;
+			ultPotEsq = potEsq;
+		}
+		else if (potEsq){
+			pulso_esq++;
+			des_e += 4369;
+			ultPotEsq = potEsq;
+		}
+		// SITUAÇÕES EM INÉRCIA :
+		else if (ultPotEsq < 0){
 			pulso_esq--;
 			des_e -= 4369;
 		}
@@ -193,7 +320,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		ultimo_pulso_esq = pulso_esq;
 
 //		uint8_t buf[8];
-		float g;
+//		float g;
 
 		// esse
 //		bluetoothPrint((uint8_t *)"theta: ");
@@ -225,17 +352,58 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //		bluetoothPrintVal(potEsq);
 //		bluetoothPrint((uint8_t *)"\n-----------------\n");
 
-		if(poseSetPoint.theta != 0){
-			g = (pose.theta*57.2958);
-			bluetoothPrintVal((int32_t)g);
-			bluetoothPrint((uint8_t *)",");
-			bluetoothPrintVal((int32_t)(10*(g - (int32_t)g)));
-			bluetoothPrint((uint8_t *)"\n");
+		if(poseSetPoint.y != 0){
+			bluetoothPrint((uint8_t *)"posX: ");
+			bluetoothPrintVal(pose.x);
+			bluetoothPrint((uint8_t *)" um\n");
+
+			bluetoothPrint((uint8_t *)"posY: ");
+			bluetoothPrintVal(pose.y);
+			bluetoothPrint((uint8_t *)" um\n\n");
+
+//			g = (pose.theta*57.2958);
+//			bluetoothPrintVal((int32_t)g);
+//			bluetoothPrint((uint8_t *)",");
+//			bluetoothPrintVal((int32_t)(10*(g - (int32_t)g)));
+//			bluetoothPrint((uint8_t *)"\n");
 		}
 	}
 }
 
-/* Private function implementation -------------------------------------------*/
+/* Private functions implementation ------------------------------------------*/
+
+static float get_thetaSp(float delta_x, float delta_y)
+{
+	// delta_y == 0
+	if(delta_y < 1e-5 && delta_y > -1e-5){
+		if(delta_x > 0)
+			return PI/2;
+		else
+			return -PI/2;
+	}
+
+	// delta_y < 0
+	if(delta_y < 0){
+		float theta_ret;
+		theta_ret = atan2f(delta_x,delta_y) + PI;
+
+		if(theta_ret > PI)
+			theta_ret = -6.28318530718 + theta_ret;
+		else if(theta_ret < -PI)
+			theta_ret = 6.28318530718 + theta_ret;
+
+		return theta_ret;
+	}
+
+	// delta_y > 0
+	return atan2f(delta_x,delta_y);
+}
+
+static int32_t get_dist(Pose_t A, Pose_t B)
+{
+	return (int32_t)(sqrt((((float)(A.x-B.x))*(A.x-B.x)) + (((float)(A.y-B.y))*(A.y-B.y))));
+}
+
 /**
  * @brief get e(t)
  *
@@ -262,7 +430,8 @@ static void get_d_error(derivadaPose_t *p_dErr, Pose_t err, Pose_t last_err)
 	p_dErr->d_theta = err.theta - last_err.theta;
 }
 
-/* Getters &  Setters *********************************************************/
+
+/* Getters &  Setters --------------------------------------------------------*/
 int32_t control_getPulsoDir()
 {
 	return pulso_dir;
@@ -320,4 +489,9 @@ int32_t control_getPotEsq(){
 
 void control_setThetaSetPoint(float theta_sp){
 	poseSetPoint.theta = theta_sp;
+}
+
+void control_setXYSetPoint(int32_t x_sp, int32_t y_sp){
+	poseSetPoint.x = x_sp;
+	poseSetPoint.y = y_sp;
 }
