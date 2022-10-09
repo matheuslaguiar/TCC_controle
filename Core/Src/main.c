@@ -135,13 +135,18 @@ int main(void)
   {
 	  switch (state_machine)
 	  {
+	  case CONFIG:
+		  state_machine = CONFIG_GIRO;
+		  break;
+
 	  case JOGADA_STOP:
 		  motorL(0);
 		  motorR(0);
 		  HAL_Delay(2000);
 
 		  break;
-	  case CONFIG:
+
+	  case CONFIG_GIRO:
 		  aux[0] = 0;
 		  HAL_UART_Receive(&huart3, (uint8_t *)aux, 3, 100);
 		  if(!aux[0])
@@ -152,16 +157,22 @@ int main(void)
 			  if(aux[0] != '-')
 				  ang_degrees = (aux[0]-'0')*10 + (aux[1]-'0');
 			  else	ang_degrees = (-1)*((aux[1]-'0')*10 + (aux[2]-'0'));
-			  bluetoothPrint("\nAng: ");
+			  bluetoothPrint((uint8_t *)"\nAng: ");
 			  bluetoothPrintVal(ang_degrees);
-			  bluetoothPrint("°\n");
+			  bluetoothPrint((uint8_t *)"°\n");
 			  control_setThetaSetPoint(ang_degrees*0.0174533);
 
 			  state_machine = JOGADA_GIRO;
 		  }
 		  break;
+/* END CONFIG GIRO STATE ******************************************************/
 
-/* END CONFIG STATE ***********************************************************/
+	  case CONFIG_RETO:
+		  // TODO
+		  state_machine = JOGADA_RETO;
+		  break;
+/* END CONFIG RETO STATE ******************************************************/
+
 	  case JOGADA_RC:
 		  // DEBUG RC READ
 //		  bluetoothPrint((uint8_t*) "THR: ");
@@ -215,6 +226,11 @@ int main(void)
 		  HAL_Delay(10);
 		  break;
 /* END GIRO *******************************************************************/
+
+	  case JOGADA_RETO:
+		  // TODO
+		  break;
+/* END RETO *******************************************************************/
 	  case TESTE_SPI:
 
 		  // PRINT EVERY 1000 ms
