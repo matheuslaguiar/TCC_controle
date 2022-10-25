@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "motor.h"
+#include "periph_spi.h"
 #include "control.h"
 #include "bluetooth.h"
 #include "gpio.h"
@@ -366,6 +367,47 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //			bluetoothPrint((uint8_t *)",");
 //			bluetoothPrintVal((int32_t)(10*(g - (int32_t)g)));
 //			bluetoothPrint((uint8_t *)"\n");
+		}
+	}
+
+
+	static uint32_t select_info = 0, send_bat = 0;
+
+	// TIM4 Period = 12,5 ms
+	// T = (f_clock / (999+1))^(-1) * 900 = (72MHz/1000)^(-1)*900 = 12,5e-3
+	if(htim == &htim4){
+		if(++send_bat == 48000){
+			periph_spi_sendBatteryVoltage();
+			send_bat = 0;
+		}
+		else{
+			switch(select_info)
+			{
+				case 0:
+				{
+					periph_spi_sendMotorSpeed();
+					break;
+				}
+				case 1:
+				{
+					periph_spi_sendMotorCurrent();
+					break;
+				}
+				case 2:
+				{
+					periph_spi_sendRightMotorPower(potDir);
+					break;
+				}
+				case 3:
+				{
+					periph_spi_sendLeftMotorPower(potEsq);
+					break;
+				}
+			}
+
+			if(++select_info == 4){
+				select_info = 0;
+			}
 		}
 	}
 }
