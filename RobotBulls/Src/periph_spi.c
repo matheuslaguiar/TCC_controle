@@ -10,6 +10,7 @@
 #include "periph_spi.h"
 #include "spi.h"
 #include "motor.h"
+#include "control.h"
 
 /* Private defines -----------------------------------------------------------*/
 #define SPI_TIMEOUT		(0xFFFFFFFFU)
@@ -112,8 +113,8 @@ void periph_spi_sendMotorSpeed() {
 	uint32_t sml, smr;
 	pre_buf[0] = MOTOR_SPEED_HEADER;
 
-	sml = 0; // TODO control_getVelE();
-	smr = 0; // TODO control_getVelD();
+	sml = control_getVelE();
+	smr = control_getVelD();
 
 	pre_buf[1] = (uint8_t) (sml >> 24);
 	pre_buf[2] = (uint8_t) (sml >> 16);

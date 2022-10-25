@@ -30,11 +30,12 @@
 /* USER CODE BEGIN Includes */
 #include "bluetooth.h"
 #include "control.h"
+#include "dwt.h"
 #include "user_adc.h"
 #include "pcs.h"
 #include "motor.h"
 #include "periph_spi.h"
-
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -122,6 +123,11 @@ int main(void)
   // Help variableS
   uint8_t lock = 0;
   uint8_t alternador = 0;
+
+  int32_t ang_degrees;
+  int32_t dist_micrometers;
+  int32_t pos_x = 3000000, pos_y = 3000000;
+  uint8_t aux[20];
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -132,10 +138,109 @@ int main(void)
 	  switch (state_machine)
 	  {
 	  case CONFIG:
-		  state_machine = JOGADA_RC;
+		  memset(aux,0,sizeof(aux));
+		  HAL_UART_Receive(&huart3, (uint8_t *)aux, 8, 100);
+		  if(aux[0] != 0 && pos_x == 3000000){
+			  pos_x = 0;
+			  if(aux[0] == '-'){
+				  for(int i = 1;i < strlen(aux); i++){
+					  pos_x*=10;
+					  pos_x +=(aux[i]-'0');
+				  }
+				  pos_x*=-1;
+			  }
+			  else {
+				  for(int i = 0;i < strlen(aux); i++){
+					  pos_x*=10;
+					  pos_x +=(aux[i]-'0');
+				  }
+			  }
+			  bluetoothPrint((uint8_t *)"\nX: ");
+			  bluetoothPrintVal(pos_x);
+			  bluetoothPrint((uint8_t *)" um\n");
+		  }
+		  else if (aux[0] != 0){
+			  pos_y = 0;
+			  if(aux[0] == '-'){
+				  for(int i = 1;i < strlen(aux); i++){
+					  pos_y*=10;
+					  pos_y +=(aux[i]-'0');
+				  }
+				  pos_y*=-1;
+			  }
+			  else {
+				  for(int i = 0;i < strlen(aux); i++){
+					  pos_y*=10;
+					  pos_y +=(aux[i]-'0');
+				  }
+			  }
+			  bluetoothPrint((uint8_t *)"\nY: ");
+			  bluetoothPrintVal(pos_y);
+			  bluetoothPrint((uint8_t *)" um\n");
+
+			  control_setXYSetPoint(pos_x, pos_y);
+
+			  state_machine = JOGADA_POS;
+		  }
 		  break;
 
-/* END CONFIG STATE ***********************************************************/
+	  case JOGADA_POS:
+		  if(control_process()){
+			  state_machine = JOGADA_STOP;
+		  }
+		  HAL_Delay(10);
+		  break;
+
+	  case JOGADA_STOP:
+		  motorL(0);
+		  motorR(0);
+		  HAL_Delay(2000);
+
+		  break;
+
+	  case CONFIG_GIRO:
+		  aux[0] = 0;
+		  HAL_UART_Receive(&huart3, (uint8_t *)aux, 3, 100);
+		  if(!aux[0])
+		  {
+			  state_machine = CONFIG;
+		  }
+		  else{
+			  if(aux[0] != '-')
+				  ang_degrees = (aux[0]-'0')*10 + (aux[1]-'0');
+			  else	ang_degrees = (-1)*((aux[1]-'0')*10 + (aux[2]-'0'));
+			  bluetoothPrint((uint8_t *)"\nAng: ");
+			  bluetoothPrintVal(ang_degrees);
+			  bluetoothPrint((uint8_t *)"°\n");
+			  control_setThetaSetPoint(ang_degrees*0.0174533);
+
+			  state_machine = JOGADA_GIRO;
+		  }
+		  break;
+/* END CONFIG GIRO STATE ******************************************************/
+
+	  case CONFIG_RETO:
+		  memset(aux,0,sizeof(aux));
+		  HAL_UART_Receive(&huart3, (uint8_t *)aux, 8, 100);
+		  if(!aux[0])
+		  {
+			  state_machine = CONFIG;
+		  }
+		  else{
+			  dist_micrometers = 0;
+			  for(int i = 0;i < strlen(aux); i++){
+				  dist_micrometers*=10;
+				  dist_micrometers +=(aux[i]-'0');
+			  }
+			  bluetoothPrint((uint8_t *)"\nDist: ");
+			  bluetoothPrintVal(dist_micrometers);
+			  bluetoothPrint((uint8_t *)" um\n");
+			  control_setXYSetPoint(0, dist_micrometers);
+			  state_machine = JOGADA_RETO;
+		  }
+		  break;
+/* END CONFIG RETO STATE ******************************************************/
+
 	  case JOGADA_RC:
 		  // DEBUG RC READ
 //		  bluetoothPrint((uint8_t*) "THR: ");
@@ -163,24 +268,39 @@ int main(void)
 //		  bluetoothPrint((uint8_t*) "\n\n");
 
 		  // PRINT EVERY 1000 ms
-		  if(HAL_GetTick() % 1000 < 100 && !lock){
-			  lock = 1;
-			  bluetoothPrint((uint8_t*) "\n--------------------------\nEncoder DIR:");
-			  bluetoothPrintVal(control_getPulsoDir());
-			  bluetoothPrint((uint8_t*) "\nVelD: ");
-			  bluetoothPrintVal(control_getVelD());
-			  bluetoothPrint((uint8_t*) "\n\nEncoder ESQ:");
-			  bluetoothPrintVal(control_getPulsoEsq());
-			  bluetoothPrint((uint8_t*) "\nVelE: ");
-			  bluetoothPrintVal(control_getVelE());
-			  bluetoothPrint((uint8_t*)"\n--------------------------\n");
-		  }
-		  else {
-			  lock = 0;
-		  }
+//		  if(HAL_GetTick() % 1000 < 100 && !lock){
+//			  lock = 1;
+//			  bluetoothPrint((uint8_t*) "\n--------------------------\nEncoder DIR:");
+//			  bluetoothPrintVal(control_getDesD());
+//			  bluetoothPrint((uint8_t*) "\nVelD: ");
+//			  bluetoothPrintVal(control_getVelD());
+//			  bluetoothPrint((uint8_t*) "\n\nEncoder ESQ:");
+//			  bluetoothPrintVal(control_getDesE());
+//			  bluetoothPrint((uint8_t*) "\nVelE: ");
+//			  bluetoothPrintVal(control_getVelE());
+//			  bluetoothPrint((uint8_t*)"\n--------------------------\n");
+//		  }
+//		  else {
+//			  lock = 0;
+//		  }
 
 		  break;
+
 /* END RC STATE ***************************************************************/
+	  case JOGADA_GIRO:
+		  if(control_rotacao())
+			  state_machine = JOGADA_STOP;
+
+		  HAL_Delay(10);
+		  break;
+/* END GIRO *******************************************************************/
+
+	  case JOGADA_RETO:
+		  if(control_reta())
+			  state_machine = JOGADA_STOP;
+		  HAL_Delay(10);
+		  break;
+/* END RETO *******************************************************************/
 	  case TESTE_SPI:
 
 		  // PRINT EVERY 1000 ms
