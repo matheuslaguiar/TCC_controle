@@ -22,12 +22,12 @@
 #define RADIO_C_um			(22250)	// 44,5mm/2 = 22,25mm
 #define DIST_B_um			(107000)	// 107 mm
 
-#define TOLERANCIA_MAX_RAD	(0.0872665)	// 0.0872665 = 5°
+#define TOLERANCIA_MAX_RAD	(0.174533)	// 0.0872665 = 5° | 0,174533 = 10°
 #define TOLERANCIA_RAD 		(0.035)		// 0.035 = 2°
-#define	TOLERANCIA_um		(50000)	// 50mm
+#define	TOLERANCIA_um		(20000)	// 20mm
 
 float kp_rotacao=20, kd_rotacao=5;
-float kp_reta=0.00006, kd_reta=0.00006;
+float kp_reta=0.00003, kd_reta=0.00006;
 static int16_t potDir=0, potEsq=0;
 
 int32_t pulso_dir = 0;
@@ -299,15 +299,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 		pose.theta += (d_pose.d_theta * 0.05);
 
-		if(pose.theta > PI)
-		{
-			pose.theta = -6.28318530718 + pose.theta;
-		}
-
-		if(pose.theta < -PI)
-		{
-			pose.theta = 6.28318530718 + pose.theta;
-		}
+//		if(pose.theta > PI)
+//		{
+//			pose.theta = -6.28318530718 + pose.theta;
+//		}
+//
+//		if(pose.theta < -PI)
+//		{
+//			pose.theta = 6.28318530718 + pose.theta;
+//		}
 
 		// d_x = c*(wd+we)/2 * sen(theta)
 		d_pose.d_x = (int32_t)((RADIO_C_um * ((w_d+w_e)/2)) * sin(pose.theta));
